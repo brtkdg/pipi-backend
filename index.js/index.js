@@ -16,7 +16,7 @@ app.use(express.json());
 const PORT = 4000;
 const ADMIN_SECRET = "changeme";
 
-// burada tüm entry’ler tutuluyor
+// burada tüm entry’ler tutuluyor (server restart olunca sıfırlanır)
 let entries = [];
 
 // socket bağlantısı
@@ -40,7 +40,6 @@ function isValidTweetUrl(url) {
 app.post("/api/submit", (req, res) => {
   let { url, user } = req.body;
 
-  // güvenlik için trim
   url = (url || "").trim();
   user = (user || "").trim();
 
@@ -56,15 +55,13 @@ app.post("/api/submit", (req, res) => {
     return res.status(400).json({ error: "invalid tweet url" });
   }
 
-  // 🔒 DUPLICATE KONTROLÜ
-  // Aynı tweet URL'si daha önce eklenmiş mi?
+  // DUPLICATE KONTROLÜ
   const alreadyExists = entries.some(e => e.url === url);
   if (alreadyExists) {
     return res.status(400).json({ error: "This tweet is already in the contest." });
   }
 
-  // ŞİMDİLİK herkesi verified sayıyoruz
-  let verified = "yes";
+  let verified = "yes"; // 🤝 şimdilik otomatik verified
 
   const entry = {
     id: Date.now(),
@@ -74,13 +71,11 @@ app.post("/api/submit", (req, res) => {
   };
 
   entries.push(entry);
-  saveEntries();          // dosyaya yaz
 
   io.emit("entry:add", entry);
 
   return res.json({ ok: true, entry });
 });
-
 
 // API — winner seçme (admin)
 app.post("/api/pick-winner", (req, res) => {
