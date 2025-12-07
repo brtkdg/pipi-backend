@@ -53,10 +53,7 @@ app.post("/api/submit", (req, res) => {
   }
 
   // basit verification
-  let verified = "no";
-  if (/\$PIPI/i.test(url) || /pipi/i.test(url)) {
-    verified = "yes";
-  }
+  let verified = "yes";
 
   const entry = {
     id: Date.now(),
