@@ -38,7 +38,11 @@ function isValidTweetUrl(url) {
 
 // API — entry gönderme
 app.post("/api/submit", (req, res) => {
-  const { url, user } = req.body;
+  let { url, user } = req.body;
+
+  // güvenlik için trim
+  url = (url || "").trim();
+  user = (user || "").trim();
 
   if (!url || !user) {
     return res.status(400).json({ error: "url and user required" });
@@ -52,7 +56,14 @@ app.post("/api/submit", (req, res) => {
     return res.status(400).json({ error: "invalid tweet url" });
   }
 
-  // basit verification
+  // 🔒 DUPLICATE KONTROLÜ
+  // Aynı tweet URL'si daha önce eklenmiş mi?
+  const alreadyExists = entries.some(e => e.url === url);
+  if (alreadyExists) {
+    return res.status(400).json({ error: "This tweet is already in the contest." });
+  }
+
+  // ŞİMDİLİK herkesi verified sayıyoruz
   let verified = "yes";
 
   const entry = {
@@ -63,11 +74,13 @@ app.post("/api/submit", (req, res) => {
   };
 
   entries.push(entry);
+  saveEntries();          // dosyaya yaz
 
   io.emit("entry:add", entry);
 
   return res.json({ ok: true, entry });
 });
+
 
 // API — winner seçme (admin)
 app.post("/api/pick-winner", (req, res) => {
